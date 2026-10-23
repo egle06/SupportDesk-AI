@@ -1,0 +1,337 @@
+{
+  "name": "SupportDesk_Error_Handler",
+  "nodes": [
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.errorTrigger",
+      "typeVersion": 1,
+      "position": [
+        0,
+        0
+      ],
+      "id": "59e5100b-f750-458e-85b7-a393323db107",
+      "name": "Trigger_Error"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "7eb5896a-e61d-4b46-9f73-a45f01179320",
+              "name": "execution_id",
+              "value": "={{ $json.execution.id }}",
+              "type": "string"
+            },
+            {
+              "id": "10aca96a-7783-4af8-b85b-39d61ad47e36",
+              "name": "nodo",
+              "value": "={{ $json.execution.lastNodeExecuted }}",
+              "type": "string"
+            },
+            {
+              "id": "1740244c-ca31-4fd6-9584-b65d7e93b6af",
+              "name": "mensaje",
+              "value": "={{ String($json.execution.error.message).slice(0, 1000) }}",
+              "type": "string"
+            },
+            {
+              "id": "b0347709-fcaa-483c-bd5d-8f0f431d5308",
+              "name": "workflow",
+              "value": "={{ $json.workflow.name }}",
+              "type": "string"
+            },
+            {
+              "id": "9c89621c-134e-497f-a59d-267b380c7059",
+              "name": "severidad",
+              "value": "Alta",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.5,
+      "position": [
+        224,
+        0
+      ],
+      "id": "362717d8-c6a6-4c1b-b200-31c0d0ff0d38",
+      "name": "Preparar_Error"
+    },
+    {
+      "parameters": {
+        "select": "channel",
+        "channelId": {
+          "__rl": true,
+          "value": "C0CA01B6H0B",
+          "mode": "list",
+          "cachedResultName": "soporte-errores"
+        },
+        "text": "=:rotating_light: *Error en el flujo de soporte*\n*Workflow:* {{ $('Preparar_Error').item.json.workflow }}\n*Nodo:* {{ $('Preparar_Error').item.json.nodo }}\n*Mensaje:* {{ $('Preparar_Error').item.json.mensaje }}\n*Execution ID:* {{ $('Preparar_Error').item.json.execution_id }}",
+        "otherOptions": {
+          "includeLinkToWorkflow": false
+        }
+      },
+      "type": "n8n-nodes-base.slack",
+      "typeVersion": 2.7,
+      "position": [
+        880,
+        0
+      ],
+      "id": "abe0ee36-2062-4cb6-b787-49f30e4eb925",
+      "name": "Slack_Alerta_Error",
+      "webhookId": "98e09b91-518c-445f-bb9e-6e7f0389de84",
+      "credentials": {
+        "slackApi": {
+          "id": "QSmjsEZgRwjBygGm",
+          "name": "Slack_SupportDesk"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "resource": "databasePage",
+        "operation": "getAll",
+        "dataSourceId": {
+          "__rl": true,
+          "value": "3fe532b5-3b30-8007-9677-000b8501a9d4",
+          "mode": "list",
+          "cachedResultName": "Tickets",
+          "cachedResultUrl": "https://app.notion.com/p/3fe532b53b3080ea99fccd9da6b19549"
+        },
+        "limit": 1,
+        "filterType": "manual",
+        "matchType": "allFilters",
+        "filters": {
+          "conditions": [
+            {
+              "key": "Execution_ID|rich_text",
+              "condition": "equals",
+              "richTextValue": "={{ $json.execution_id }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.notion",
+      "typeVersion": 3,
+      "position": [
+        448,
+        0
+      ],
+      "id": "7f18fc22-d41f-4749-8215-4636502ccfd2",
+      "name": "Notion_BuscarTicketFallido",
+      "alwaysOutputData": true,
+      "credentials": {
+        "notionApi": {
+          "id": "NZ4f8qQum50ptlLn",
+          "name": "Notion account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "resource": "databasePage",
+        "dataSourceId": {
+          "__rl": true,
+          "value": "=3fe532b5-3b30-80e9-8e3c-000bc7cb5cc8",
+          "mode": "id",
+          "__regex": "^([0-9a-f]{8}-?[0-9a-f]{4}-?[0-9a-f]{4}-?[0-9a-f]{4}-?[0-9a-f]{12})"
+        },
+        "title": "=Error en {{ $('Preparar_Error').item.json.nodo }}",
+        "propertiesUi": {
+          "propertyValues": [
+            {
+              "key": "Nodo_Fallo|rich_text",
+              "textContent": "={{ $('Preparar_Error').item.json.nodo }}"
+            },
+            {
+              "key": "Mensaje_Error|rich_text",
+              "textContent": "={{ $('Preparar_Error').item.json.mensaje }}"
+            },
+            {
+              "key": "Execution_ID|rich_text",
+              "textContent": "={{ $('Preparar_Error').item.json.execution_id }}"
+            },
+            {
+              "key": "Severidad|select",
+              "selectValue": "={{ $('Preparar_Error').item.json.severidad }}"
+            },
+            {
+              "key": "Tickets|relation",
+              "relationValue": [
+                "={{ (() => {\n  const items = $('Notion_BuscarTicketFallido').all();\n  if (items && items.length > 0 && items[0].json && items[0].json.id) {\n    return items[0].json.id;\n  }\n  return undefined;\n})() }}"
+              ]
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.notion",
+      "typeVersion": 3,
+      "position": [
+        672,
+        0
+      ],
+      "id": "fdd380ca-7123-47be-a50c-9402cb11e3df",
+      "name": "Notion_Registrar_Error",
+      "credentials": {
+        "notionApi": {
+          "id": "NZ4f8qQum50ptlLn",
+          "name": "Notion account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "d0cc7770-4f0f-4044-8676-d7fbd0748ef0",
+              "leftValue": "={{ $('Notion_BuscarTicketFallido').item.json.id }}",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "notEmpty",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        1104,
+        0
+      ],
+      "id": "17e82252-9c08-4eac-b4c4-ac738043bb9a",
+      "name": "Ticket_Existe"
+    },
+    {
+      "parameters": {
+        "resource": "databasePage",
+        "operation": "update",
+        "pageId": {
+          "__rl": true,
+          "value": "={{ $('Notion_BuscarTicketFallido').first().json.id }}",
+          "mode": "id"
+        },
+        "propertiesUi": {
+          "propertyValues": [
+            {
+              "key": "=Estado|select",
+              "selectValue": "=Error"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.notion",
+      "typeVersion": 3,
+      "position": [
+        1328,
+        -96
+      ],
+      "id": "9ab7153b-0c4a-4a17-8a92-0ef81c8e18ca",
+      "name": "Notion_Marcar_Error",
+      "credentials": {
+        "notionApi": {
+          "id": "NZ4f8qQum50ptlLn",
+          "name": "Notion account"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Trigger_Error": {
+      "main": [
+        [
+          {
+            "node": "Preparar_Error",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Preparar_Error": {
+      "main": [
+        [
+          {
+            "node": "Notion_BuscarTicketFallido",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Notion_BuscarTicketFallido": {
+      "main": [
+        [
+          {
+            "node": "Notion_Registrar_Error",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Notion_Registrar_Error": {
+      "main": [
+        [
+          {
+            "node": "Slack_Alerta_Error",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Slack_Alerta_Error": {
+      "main": [
+        [
+          {
+            "node": "Ticket_Existe",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Ticket_Existe": {
+      "main": [
+        [
+          {
+            "node": "Notion_Marcar_Error",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate"
+  },
+  "versionId": "bcfce0e6-8041-4afa-9dfc-e2bf65d0a160",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "e603f7f09f685e2b70fc8da06bd57d17f72ad95dba487015b08357e5b4eb48f0"
+  },
+  "nodeGroups": [],
+  "id": "mWWKi6unEAgNYkWH",
+  "tags": []
+}
