@@ -17,9 +17,9 @@ pide aprobación humana en Slack y responde al cliente en el mismo hilo.
 | Canales | Gmail y Slack |
 
 ## Contenido del repositorio
-- `docs/arquitectura.pdf`: diagrama, esquema de tablas, JSON, matriz de costos y seguridad.
+- `arquitectura.pdf`: diagrama, esquema de tablas, JSON, matriz de costos y seguridad.
 - `workflows/`: los dos workflows exportados (flujo principal y manejo de errores).
-- `evidencias/`: capturas de los 8 casos de prueba, del esquema y del dashboard.
+- `evidencias.pdf`: capturas de los 8 casos de prueba, del esquema y del dashboard.
 
 ## Cómo importar los workflows
 1. En n8n: **Workflows → Import from file**.
